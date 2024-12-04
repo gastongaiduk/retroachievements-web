@@ -24,13 +24,18 @@
 use App\Models\User;
 use App\Support\Rules\CtypeAlnum;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 $input = Validator::validate(Arr::wrap(request()->query()), [
-    'u' => ['required', 'min:2', 'max:20', new CtypeAlnum()],
+    'u' => ['nullable', 'min:2', 'max:20', new CtypeAlnum()],
 ]);
 
-$user = User::firstWhere('User', request()->query('u'));
+if (request()->has('u')) {
+    $user = User::firstWhere('User', request()->query('u'));
+} else {
+    $user = Auth::user();
+}
 
 if (!$user) {
     return response()->json([], 404);
