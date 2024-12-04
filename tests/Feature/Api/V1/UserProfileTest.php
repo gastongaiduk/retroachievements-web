@@ -13,9 +13,17 @@ class UserProfileTest extends TestCase
     use RefreshDatabase;
     use BootstrapsApiV1;
 
-    public function testItValidates(): void
+    public function testItValidatesWhenTooShort(): void
     {
-        $this->get($this->apiUrl('GetUserProfile'))
+        $this->get($this->apiUrl('GetUserProfile', ['u' => 'i']))
+            ->assertJsonValidationErrors([
+                'u',
+            ]);
+    }
+
+    public function testItValidatesWhenTooLong(): void
+    {
+        $this->get($this->apiUrl('GetUserProfile', ['u' => str_repeat('x', 25)]))
             ->assertJsonValidationErrors([
                 'u',
             ]);
@@ -26,6 +34,29 @@ class UserProfileTest extends TestCase
         $this->get($this->apiUrl('GetUserProfile', ['u' => 'nonExistant']))
             ->assertNotFound()
             ->assertJson([]);
+    }
+
+    public function testGetUserProfileAuthUser(): void
+    {
+        $this->get($this->apiUrl('GetUserProfile'))
+            ->assertSuccessful()
+            ->assertJson([
+                'User' => $this->user->User,
+                'UserPic' => sprintf("/UserPic/%s.png", $this->user->User),
+                'MemberSince' => $this->user->created_at->toDateTimeString(),
+                'RichPresenceMsg' => ($this->user->RichPresenceMsg) ? $this->user->RichPresenceMsg : null,
+                'LastGameID' => $this->user->LastGameID,
+                'ContribCount' => $this->user->ContribCount,
+                'ContribYield' => $this->user->ContribYield,
+                'TotalPoints' => $this->user->RAPoints,
+                'TotalSoftcorePoints' => $this->user->RASoftcorePoints,
+                'TotalTruePoints' => $this->user->TrueRAPoints,
+                'Permissions' => $this->user->getAttribute('Permissions'),
+                'Untracked' => $this->user->Untracked,
+                'ID' => $this->user->ID,
+                'UserWallActive' => $this->user->UserWallActive,
+                'Motto' => $this->user->Motto,
+            ]);
     }
 
     public function testGetUserProfile(): void
